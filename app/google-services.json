@@ -1,0 +1,56 @@
+{
+  "project_info": {
+    "project_id": "reversify-1c6f2",
+    "project_number": "256318800569",
+    "name": "Reversify"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:256318800569:android:11a153e86c23431c",
+        "client_id": "android:com.reversify",
+        "client_type": 1,
+        "android_client_info": {
+          "package_name": "com.reversify",
+          "certificate_hash": []
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "256318800569-88tpncm61m4o6n1jiel6ucaune3f1sn4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.reversify",
+            "certificate_hash": "6AE7416C327181410EFFCFBE2255E55536198F06"
+          }
+        },
+        {
+          "client_id": "256318800569-krg0dv6b8abi6imbhulkb1rc5f30r4u4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "cloud_messaging_service": {
+          "status": 1,
+          "apns_config": []
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "google_signin_service": {
+          "status": 2
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "client_info": [],
+  "ARTIFACT_VERSION": "1"
+}
