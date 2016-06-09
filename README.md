@@ -18,10 +18,12 @@ Things looked more beautiful backwards... writing on paper, water dropping from 
 ### Bugs / Feature Requests
 I'm still learning the building blocks of Android and wanted to take this app up as a playground to innovate and learn. This app isn't perfect, I know it very well, but I'd love to make it perfect with your help!  
 Raise a issue on this repository if you find a bug, and let me know... I'll tackle it ASAP (or at least try to!)  
-  - Works only for SD Quality Videos (due to phone computation limitations)
-  - Doesn't show a finite progress bar, replaced with infitineSpinner for now
-  - Doesn't load videos with (spaces) in their path
-  - Processing a video takes a lot of time, so find a way to make it run in background
+
+  - Works only for SD Quality Videos (due to phone computation limitations)  
+  - Doesn't show a finite progress bar, replaced with infitineSpinner for now  
+  - Doesn't load videos with (spaces) in their path  
+  - Processing a video takes a lot of time, so find a way to make it run in background  
+
 Some of these are easily implementable, but I just don't know how... so if you would like to help me out, please do send me a private message on GitHub and we'll talk :)
 
 --
