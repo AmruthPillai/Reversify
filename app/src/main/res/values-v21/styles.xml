@@ -1,0 +1,8 @@
+<resources>
+
+    <style name="ThemeOverlay.PrimaryButton" parent="ThemeOverlay.AppCompat.Dark">
+        <item name="android:backgroundTint">@color/colorPrimary</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+</resources>
