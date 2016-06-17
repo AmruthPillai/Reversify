@@ -3,6 +3,8 @@ package com.reversify;
 import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -13,6 +15,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -30,21 +33,26 @@ import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedExceptio
 
 import java.io.File;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class MainActivity extends AppCompatActivity {
 
-    private static final int REQUEST_PERMISSIONS = 2001;
     private static final int REQUEST_CODE_SELECT_VIDEO = 1001;
     private static final int REQUEST_CODE_OPEN_VIDEO = 1002;
+    private static final int REQUEST_PERMISSIONS = 2001;
+
     private static final String TAG = "MainActivity";
 
+    NotificationManager notificationManager;
+    NotificationCompat.Builder notificationBuilder;
+    @BindView(R.id.tv_videoURI)
+    TextView tv_videoURI;
+    @BindView(R.id.btn_select_video)
+    Button btn_selectVideo;
     private Uri videoURI;
     private String[] command;
-
-    private TextView tv_videoURI;
-    private Button btn_selectVideo;
-
     private Dialog loaderOverlay;
-
     private FFmpeg ffmpeg;
 
     @Override
@@ -52,13 +60,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        tv_videoURI = (TextView) findViewById(R.id.tv_videoURI);
-        btn_selectVideo = (Button) findViewById(R.id.btn_select_video);
+        ButterKnife.bind(this);
 
         checkPermissions();
-
         createReversifyDirectory();
-
         loadFFmpegBinary();
 
         btn_selectVideo.setOnClickListener(new View.OnClickListener() {
@@ -94,7 +99,6 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     boolean isDirectoryCreated = false;
-                    Log.d(TAG, "createReversifyDirectory: Attempting to create 'Reversify' directory...");
                     while (!isDirectoryCreated) {
                         isDirectoryCreated = new File(Environment.getExternalStorageDirectory() + File.separator + "Reversify").mkdirs();
                     }
@@ -121,8 +125,26 @@ public class MainActivity extends AppCompatActivity {
                 String executableCmd = "-i " + videoPath + " -vf reverse -af areverse " + Environment.getExternalStorageDirectory().getPath() + File.separator + "Reversify" + File.separator + fileName[fileName.length-1]/*videoURI.getLastPathSegment()*/ + " -y -hide_banner";
                 command = executableCmd.split(" ");
 
-                loadSpinner();
-                executeFFmpegCommands();
+                notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                notificationBuilder = new NotificationCompat.Builder(this);
+                notificationBuilder.setContentTitle("Reversify")
+                        .setContentText("Reversifying your video, please wait...")
+                        .setSmallIcon(R.drawable.ic_gesture_black_24dp);
+                new Thread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+
+                                notificationBuilder.setProgress(0, 0, true);
+                                notificationManager.notify(1, notificationBuilder.build());
+
+                                //loadSpinner();
+                                executeFFmpegCommands();
+                            }
+                        }
+                ).start();
+
             } else {
                 Toast.makeText(MainActivity.this, "The selected video is not accessible!", Toast.LENGTH_SHORT).show();
             }
@@ -131,10 +153,15 @@ public class MainActivity extends AppCompatActivity {
 
     public String getRealPathFromURI(Uri contentUri) {
         String[] proj = {MediaStore.Images.Media.DATA};
-        Cursor cursor = managedQuery(contentUri, proj, null, null, null);
+        Cursor cursor = this.getContentResolver().query(contentUri, proj, null, null, null);
+
+        assert cursor != null;
         int column_index = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA);
         cursor.moveToFirst();
-        return cursor.getString(column_index);
+
+        String realPath = cursor.getString(column_index);
+        cursor.close();
+        return realPath;
     }
 
 
@@ -192,7 +219,8 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onFinish() {
-                    loaderOverlay.dismiss();
+                    notificationBuilder.setProgress(0, 0, false);
+                    //loaderOverlay.dismiss();
                 }
             });
         } catch (FFmpegCommandAlreadyRunningException e) {
