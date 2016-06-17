@@ -5,11 +5,13 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -113,8 +115,11 @@ public class MainActivity extends AppCompatActivity {
             videoURI = data.getData();
 
             if (videoURI != null) {
-                String videoPath = videoURI.getPath().replaceAll(" ", "%20");
-                String executableCmd = "-i " + videoPath + " -vf reverse -af areverse " + Environment.getExternalStorageDirectory().getPath() + File.separator + "Reversify" + File.separator + videoURI.getLastPathSegment() + " -y -hide_banner";
+//                String videoPath = videoURI.getPath().replaceAll(" ", "%20");
+                String videoPath = getRealPathFromURI(videoURI);
+                Log.d(TAG,videoPath);
+                String fileName[] = videoPath.split(File.separator);
+                String executableCmd = "-i " + videoPath + " -vf reverse -af areverse " + Environment.getExternalStorageDirectory().getPath() + File.separator + "Reversify" + File.separator + fileName[fileName.length-1]/*videoURI.getLastPathSegment()*/ + " -y -hide_banner";
                 command = executableCmd.split(" ");
 
                 loadSpinner();
@@ -124,6 +129,15 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    public String getRealPathFromURI(Uri contentUri) {
+        String[] proj = {MediaStore.Images.Media.DATA};
+        Cursor cursor = managedQuery(contentUri, proj, null, null, null);
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA);
+        cursor.moveToFirst();
+        return cursor.getString(column_index);
+    }
+
 
     private void loadFFmpegBinary() {
         ffmpeg = FFmpeg.getInstance(getApplicationContext());
