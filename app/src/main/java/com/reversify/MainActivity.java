@@ -115,7 +115,6 @@ public class MainActivity extends AppCompatActivity {
             videoURI = data.getData();
 
             if (videoURI != null) {
-//                String videoPath = videoURI.getPath().replaceAll(" ", "%20");
                 String videoPath = getRealPathFromURI(videoURI);
                 Log.d(TAG,videoPath);
                 String fileName[] = videoPath.split(File.separator);
