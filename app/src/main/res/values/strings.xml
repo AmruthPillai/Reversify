@@ -2,4 +2,5 @@
     <string name="app_name">Reversify</string>
     <string name="main_select_video">Select Video to Reversify</string>
     <string name="loader_processing_video">Processing video, please wait&#8230;</string>
+    <string name="splash_version">v0.8 beta</string>
 </resources>
