@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -22,7 +23,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
@@ -46,12 +46,13 @@ public class MainActivity extends AppCompatActivity {
 
     NotificationManager notificationManager;
     NotificationCompat.Builder notificationBuilder;
-    @BindView(R.id.tv_videoURI)
-    TextView tv_videoURI;
+
     @BindView(R.id.btn_select_video)
     Button btn_selectVideo;
-    private Uri videoURI;
+
+    private String videoFileName;
     private String[] command;
+
     private Dialog loaderOverlay;
     private FFmpeg ffmpeg;
 
@@ -116,13 +117,14 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == REQUEST_CODE_SELECT_VIDEO &&
                 resultCode == Activity.RESULT_OK) {
-            videoURI = data.getData();
+            Uri videoURI = data.getData();
 
             if (videoURI != null) {
                 String videoPath = getRealPathFromURI(videoURI);
-                Log.d(TAG,videoPath);
+                Log.d(TAG, videoPath);
                 String fileName[] = videoPath.split(File.separator);
-                String executableCmd = "-i " + videoPath + " -vf reverse -af areverse " + Environment.getExternalStorageDirectory().getPath() + File.separator + "Reversify" + File.separator + fileName[fileName.length-1]/*videoURI.getLastPathSegment()*/ + " -y -hide_banner";
+                videoFileName = fileName[fileName.length - 1];
+                String executableCmd = "-i " + videoPath + " -vf reverse -af areverse " + Environment.getExternalStorageDirectory().getPath() + File.separator + "Reversify" + File.separator + videoFileName + " -y -threads 0";
                 command = executableCmd.split(" ");
 
                 notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -130,16 +132,15 @@ public class MainActivity extends AppCompatActivity {
                 notificationBuilder.setContentTitle("Reversify")
                         .setContentText("Reversifying your video, please wait...")
                         .setSmallIcon(R.drawable.ic_gesture_black_24dp);
+                notificationBuilder.setProgress(0, 0, true);
+                notificationManager.notify(1, notificationBuilder.build());
+
+                loadSpinner();
+
                 new Thread(
                         new Runnable() {
                             @Override
                             public void run() {
-                                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-
-                                notificationBuilder.setProgress(0, 0, true);
-                                notificationManager.notify(1, notificationBuilder.build());
-
-                                //loadSpinner();
                                 executeFFmpegCommands();
                             }
                         }
@@ -151,17 +152,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public String getRealPathFromURI(Uri contentUri) {
-        String[] proj = {MediaStore.Images.Media.DATA};
-        Cursor cursor = this.getContentResolver().query(contentUri, proj, null, null, null);
-
-        assert cursor != null;
-        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA);
-        cursor.moveToFirst();
-
-        String realPath = cursor.getString(column_index);
-        cursor.close();
-        return realPath;
+    private String getRealPathFromURI(Uri contentURI) {
+        String result;
+        Cursor cursor = getContentResolver().query(contentURI, null, null, null, null);
+        if (cursor == null) {
+            result = contentURI.getPath();
+        } else {
+            cursor.moveToFirst();
+            int idx = cursor.getColumnIndex(MediaStore.Video.Media.DATA);
+            result = cursor.getString(idx);
+            cursor.close();
+        }
+        return result;
     }
 
 
@@ -204,7 +206,6 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onProgress(String message) {
                     Log.d(TAG, "onProgress: " + message);
-                    tv_videoURI.append("\n" + message);
                 }
 
                 @Override
@@ -219,8 +220,8 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onFinish() {
-                    notificationBuilder.setProgress(0, 0, false);
-                    //loaderOverlay.dismiss();
+                    notificationManager.cancel(1);
+                    loaderOverlay.dismiss();
                 }
             });
         } catch (FFmpegCommandAlreadyRunningException e) {
@@ -242,7 +243,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadVideo() {
         File directory = Environment.getExternalStorageDirectory();
-        File videoFile = new File(directory, "/Reversify/" + videoURI.getLastPathSegment());
+        File videoFile = new File(directory, "/Reversify/" + videoFileName);
+
+        MediaScannerConnection.scanFile(this, new String[]{videoFile.getPath()}, new String[]{"video/*"}, null);
 
         Intent intent = new Intent();
         intent.setAction(android.content.Intent.ACTION_VIEW);
